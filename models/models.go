@@ -43,7 +43,7 @@ type Manifest struct {
 type ManifestDetail struct {
 	ID               uuid.UUID `gorm:"type:uuid;primaryKey"`
 	ManifestID       uuid.UUID `gorm:"type:uuid;not null"`
-	ContainerNo      string    `gorm:"type:varchar(50);not null"`
+	ContainerNo      string    `gorm:"type:varchar(50);uniqueIndex;not null"`
 	GoodsDescription string    `gorm:"type:text;not null"`
 	Quantity         int       `gorm:"not null"`
 	CreatedAt        time.Time

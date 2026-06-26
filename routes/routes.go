@@ -5,12 +5,16 @@ import (
 	"manifest-api/middleware"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func RegisterRoutes(r *gin.Engine, ctrl *controller.AppController) {
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	api := r.Group("/api")
 
 	api.POST("/login", ctrl.Login)
+	api.POST("/register", ctrl.Register)
 
 	protected := api.Group("/")
 	protected.Use(middleware.JWTAuth())

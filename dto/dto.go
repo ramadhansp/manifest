@@ -19,6 +19,19 @@ type LoginResponse struct {
 	Role  string `json:"role"`
 }
 
+type RegisterRequest struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required,min=6"`
+	Role     string `json:"role" binding:"required,oneof=Administrator Petugas"`
+}
+
+type RegisterResponse struct {
+	ID        string    `json:"id"`
+	Username  string    `json:"username"`
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type ShippingAgentRequest struct {
 	AgentCode string `json:"agent_code" binding:"required"`
 	AgentName string `json:"agent_name" binding:"required"`

@@ -15,6 +15,7 @@ import (
 
 type AppService interface {
 	Login(ctx context.Context, req dto.LoginRequest) (dto.LoginResponse, error)
+	Register(ctx context.Context, req dto.RegisterRequest) (dto.RegisterResponse, error)
 	CreateShippingAgent(ctx context.Context, req dto.ShippingAgentRequest) (dto.ShippingAgentResponse, error)
 	GetShippingAgents(ctx context.Context) ([]dto.ShippingAgentResponse, error)
 	GetShippingAgent(ctx context.Context, id string) (dto.ShippingAgentResponse, error)
@@ -24,7 +25,7 @@ type AppService interface {
 	GetVessel(ctx context.Context, id string) (dto.VesselResponse, error)
 
 	CreateManifest(ctx context.Context, req dto.ManifestRequest) (dto.ManifestResponse, error)
-	GetManifests(ctx context.Context, page, limit int, search string) ([]dto.ManifestResponse, int64, error)
+	GetManifests(ctx context.Context, page, limit int, search, id string) ([]dto.ManifestResponse, int64, error)
 	GetManifest(ctx context.Context, id string) (dto.ManifestResponse, error)
 	AddManifestDetail(ctx context.Context, manifestID string, req dto.ManifestDetailRequest) (dto.ManifestDetailResponse, error)
 
@@ -58,6 +59,29 @@ func (s *appService) Login(ctx context.Context, req dto.LoginRequest) (dto.Login
 	}
 
 	return dto.LoginResponse{Token: token, Role: user.Role}, nil
+}
+
+func (s *appService) Register(ctx context.Context, req dto.RegisterRequest) (dto.RegisterResponse, error) {
+	existing, _ := s.repo.GetUserRepo().FindByUsername(ctx, req.Username)
+	if existing != nil && existing.ID.String() != "00000000-0000-0000-0000-000000000000" {
+		return dto.RegisterResponse{}, errors.New("username already taken")
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return dto.RegisterResponse{}, errors.New("failed to hash password")
+	}
+
+	user := &models.User{
+		Username: req.Username,
+		Password: string(hash),
+		Role:     req.Role,
+	}
+	if err := s.repo.GetUserRepo().Create(ctx, user); err != nil {
+		return dto.RegisterResponse{}, errors.New("failed to create user")
+	}
+
+	return dto.RegisterResponse{ID: user.ID.String(), Username: user.Username, Role: user.Role, CreatedAt: user.CreatedAt}, nil
 }
 
 func (s *appService) CreateShippingAgent(ctx context.Context, req dto.ShippingAgentRequest) (dto.ShippingAgentResponse, error) {
@@ -157,8 +181,8 @@ func (s *appService) CreateManifest(ctx context.Context, req dto.ManifestRequest
 	return dto.ManifestResponse{ID: m.ID.String(), ManifestNumber: m.ManifestNumber, VesselID: m.VesselID.String(), ShippingAgentID: m.ShippingAgentID.String(), Status: m.Status, CreatedAt: m.CreatedAt}, nil
 }
 
-func (s *appService) GetManifests(ctx context.Context, page, limit int, search string) ([]dto.ManifestResponse, int64, error) {
-	res, total, err := s.repo.GetManifestRepo().FindAll(ctx, page, limit, search)
+func (s *appService) GetManifests(ctx context.Context, page, limit int, search, id string) ([]dto.ManifestResponse, int64, error) {
+	res, total, err := s.repo.GetManifestRepo().FindAll(ctx, page, limit, search, id)
 	if err != nil {
 		return nil, 0, err
 	}

@@ -38,7 +38,7 @@ type VesselRepository interface {
 
 type ManifestRepository interface {
 	Create(ctx context.Context, manifest *models.Manifest) error
-	FindAll(ctx context.Context, page, limit int, search string) ([]models.Manifest, int64, error)
+	FindAll(ctx context.Context, page, limit int, search, id string) ([]models.Manifest, int64, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*models.Manifest, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status string) error
 	AddDetail(ctx context.Context, detail *models.ManifestDetail) error
@@ -138,10 +138,13 @@ type manifestRepo struct{ m *DBManager }
 func (r *manifestRepo) Create(ctx context.Context, m *models.Manifest) error {
 	return r.m.getDB(ctx).Create(m).Error
 }
-func (r *manifestRepo) FindAll(ctx context.Context, page, limit int, search string) ([]models.Manifest, int64, error) {
+func (r *manifestRepo) FindAll(ctx context.Context, page, limit int, search, id string) ([]models.Manifest, int64, error) {
 	db := r.m.getDB(ctx).Model(&models.Manifest{})
 	if search != "" {
 		db = db.Where("manifest_number ILIKE ?", "%"+search+"%")
+	}
+	if id != "" {
+		db = db.Where("id = ?", id)
 	}
 	var total int64
 	db.Count(&total)

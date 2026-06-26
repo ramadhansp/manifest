@@ -1,3 +1,13 @@
+// @title           Manifest API
+// @version         1.0
+// @description     REST API untuk manajemen manifest kapal, BC11, dan NPE
+// @host            localhost:8080
+// @BasePath        /api
+// @securityDefinitions.apikey BearerAuth
+// @in              header
+// @name            Authorization
+// @description     Masukkan token dengan format: Bearer {token}
+
 package main
 
 import (
@@ -11,6 +21,7 @@ import (
 
 	"manifest-api/config"
 	"manifest-api/controller"
+	_ "manifest-api/docs"
 	"manifest-api/middleware"
 	"manifest-api/models"
 	"manifest-api/repository"
