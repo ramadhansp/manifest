@@ -30,6 +30,7 @@ func SetupDatabase() *gorm.DB {
 	}
 
 	err = db.AutoMigrate(
+		&models.User{},
 		&models.ShippingAgent{},
 		&models.Vessel{},
 		&models.Manifest{},

@@ -43,6 +43,16 @@ func handleResponse(c *gin.Context, data interface{}, err error, status int) {
 	})
 }
 
+func (ctrl *AppController) Login(c *gin.Context) {
+	var req dto.LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		handleResponse(c, nil, err, http.StatusBadRequest)
+		return
+	}
+	res, err := ctrl.svc.Login(c.Request.Context(), req)
+	handleResponse(c, res, err, http.StatusOK)
+}
+
 func (ctrl *AppController) CreateShippingAgent(c *gin.Context) {
 	var req dto.ShippingAgentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

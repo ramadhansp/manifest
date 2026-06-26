@@ -15,6 +15,7 @@ import (
 
 type MockRepoManager struct {
 	mock.Mock
+	userRepo     *MockUserRepo
 	agentRepo    *MockAgentRepo
 	vesselRepo   *MockVesselRepo
 	manifestRepo *MockManifestRepo
@@ -25,11 +26,25 @@ type MockRepoManager struct {
 func (m *MockRepoManager) DoInTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	return fn(ctx)
 }
+func (m *MockRepoManager) GetUserRepo() repository.UserRepository         { return m.userRepo }
 func (m *MockRepoManager) GetAgentRepo() repository.AgentRepository       { return m.agentRepo }
 func (m *MockRepoManager) GetVesselRepo() repository.VesselRepository     { return m.vesselRepo }
 func (m *MockRepoManager) GetManifestRepo() repository.ManifestRepository { return m.manifestRepo }
 func (m *MockRepoManager) GetBC11Repo() repository.BC11Repository         { return m.bc11Repo }
 func (m *MockRepoManager) GetNPERepo() repository.NPERepository           { return m.npeRepo }
+
+type MockUserRepo struct{ mock.Mock }
+
+func (m *MockUserRepo) FindByUsername(ctx context.Context, username string) (*models.User, error) {
+	args := m.Called(ctx, username)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.User), args.Error(1)
+}
+func (m *MockUserRepo) Create(ctx context.Context, user *models.User) error {
+	return m.Called(ctx, user).Error(0)
+}
 
 type MockAgentRepo struct{ mock.Mock }
 

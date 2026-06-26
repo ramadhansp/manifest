@@ -14,9 +14,11 @@ import (
 	"manifest-api/middleware"
 	"manifest-api/repository"
 	"manifest-api/service"
+	"manifest-api/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
@@ -26,6 +28,13 @@ func main() {
 
 	db := config.SetupDatabase()
 
+	var count int64
+	db.Model(&models.User{}).Count(&count)
+	if count == 0 {
+		hash, _ := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
+		db.Create(&models.User{Username: "admin", Password: string(hash), Role: "Administrator"})
+	}
+
 	repoManager := repository.NewDBManager(db)
 	appService := service.NewAppService(repoManager)
 	appController := controller.NewAppController(appService)
@@ -33,27 +42,34 @@ func main() {
 	r := gin.New()
 	r.Use(middleware.Logger())
 	r.Use(middleware.Recovery())
+	r.Use(middleware.CORS())
 
 	api := r.Group("/api")
 	{
-		api.POST("/shipping-agents", appController.CreateShippingAgent)
-		api.GET("/shipping-agents", appController.GetShippingAgents)
-		api.GET("/shipping-agents/:id", appController.GetShippingAgent)
+		api.POST("/login", appController.Login)
 
-		api.POST("/vessels", appController.CreateVessel)
-		api.GET("/vessels", appController.GetVessels)
-		api.GET("/vessels/:id", appController.GetVessel)
+		protected := api.Group("/")
+		protected.Use(middleware.JWTAuth())
+		{
+			protected.POST("/shipping-agents", appController.CreateShippingAgent)
+			protected.GET("/shipping-agents", appController.GetShippingAgents)
+			protected.GET("/shipping-agents/:id", appController.GetShippingAgent)
 
-		api.POST("/manifests", appController.CreateManifest)
-		api.GET("/manifests", appController.GetManifests)
-		api.GET("/manifests/:id", appController.GetManifest)
-		api.POST("/manifests/:id/details", appController.AddManifestDetail)
+			protected.POST("/vessels", appController.CreateVessel)
+			protected.GET("/vessels", appController.GetVessels)
+			protected.GET("/vessels/:id", appController.GetVessel)
 
-		api.POST("/bc11", appController.CreateBC11)
-		api.POST("/npe", appController.CreateNPE)
+			protected.POST("/manifests", appController.CreateManifest)
+			protected.GET("/manifests", appController.GetManifests)
+			protected.GET("/manifests/:id", appController.GetManifest)
+			protected.POST("/manifests/:id/details", appController.AddManifestDetail)
 
-		api.GET("/summary", appController.GetSummary)
-		api.POST("/seed", appController.SeedData)
+			protected.POST("/bc11", appController.CreateBC11)
+			protected.POST("/npe", appController.CreateNPE)
+
+			protected.GET("/summary", appController.GetSummary)
+			protected.POST("/seed", appController.SeedData)
+		}
 	}
 
 	port := os.Getenv("PORT")

@@ -9,6 +9,16 @@ type APIResponse struct {
 	Errors  []string    `json:"errors,omitempty"`
 }
 
+type LoginRequest struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
+type LoginResponse struct {
+	Token string `json:"token"`
+	Role  string `json:"role"`
+}
+
 type ShippingAgentRequest struct {
 	AgentCode string `json:"agent_code" binding:"required"`
 	AgentName string `json:"agent_name" binding:"required"`

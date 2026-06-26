@@ -69,6 +69,20 @@ type NPE struct {
 	UpdatedAt time.Time
 }
 
+type User struct {
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
+	Username  string    `gorm:"type:varchar(50);uniqueIndex;not null"`
+	Password  string    `gorm:"type:varchar(255);not null"`
+	Role      string    `gorm:"type:varchar(20);not null"` // Administrator, Petugas, Supervisor
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (base *User) BeforeCreate(tx *gorm.DB) error {
+	base.ID = uuid.New()
+	return nil
+}
+
 func (base *ShippingAgent) BeforeCreate(tx *gorm.DB) error {
 	base.ID = uuid.New()
 	return nil

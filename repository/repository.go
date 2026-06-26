@@ -11,11 +11,17 @@ import (
 
 type RepositoryManager interface {
 	DoInTransaction(ctx context.Context, fn func(ctx context.Context) error) error
+	GetUserRepo() UserRepository
 	GetAgentRepo() AgentRepository
 	GetVesselRepo() VesselRepository
 	GetManifestRepo() ManifestRepository
 	GetBC11Repo() BC11Repository
 	GetNPERepo() NPERepository
+}
+
+type UserRepository interface {
+	FindByUsername(ctx context.Context, username string) (*models.User, error)
+	Create(ctx context.Context, user *models.User) error
 }
 
 type AgentRepository interface {
@@ -75,6 +81,7 @@ func (m *DBManager) DoInTransaction(ctx context.Context, fn func(ctx context.Con
 	})
 }
 
+func (m *DBManager) GetUserRepo() UserRepository         { return &userRepo{m} }
 func (m *DBManager) GetAgentRepo() AgentRepository       { return &agentRepo{m} }
 func (m *DBManager) GetVesselRepo() VesselRepository     { return &vesselRepo{m} }
 func (m *DBManager) GetManifestRepo() ManifestRepository { return &manifestRepo{m} }
@@ -82,6 +89,17 @@ func (m *DBManager) GetBC11Repo() BC11Repository         { return &bc11Repo{m} }
 func (m *DBManager) GetNPERepo() NPERepository           { return &npeRepo{m} }
 
 // ---- Implementations ----
+
+type userRepo struct{ m *DBManager }
+
+func (r *userRepo) FindByUsername(ctx context.Context, username string) (*models.User, error) {
+	var user models.User
+	err := r.m.getDB(ctx).First(&user, "username = ?", username).Error
+	return &user, err
+}
+func (r *userRepo) Create(ctx context.Context, user *models.User) error {
+	return r.m.getDB(ctx).Create(user).Error
+}
 
 type agentRepo struct{ m *DBManager }
 

@@ -7,11 +7,14 @@ import (
 	"manifest-api/dto"
 	"manifest-api/models"
 	"manifest-api/repository"
+	"manifest-api/utils"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AppService interface {
+	Login(ctx context.Context, req dto.LoginRequest) (dto.LoginResponse, error)
 	CreateShippingAgent(ctx context.Context, req dto.ShippingAgentRequest) (dto.ShippingAgentResponse, error)
 	GetShippingAgents(ctx context.Context) ([]dto.ShippingAgentResponse, error)
 	GetShippingAgent(ctx context.Context, id string) (dto.ShippingAgentResponse, error)
@@ -37,6 +40,24 @@ type appService struct {
 
 func NewAppService(repo repository.RepositoryManager) AppService {
 	return &appService{repo: repo}
+}
+
+func (s *appService) Login(ctx context.Context, req dto.LoginRequest) (dto.LoginResponse, error) {
+	user, err := s.repo.GetUserRepo().FindByUsername(ctx, req.Username)
+	if err != nil {
+		return dto.LoginResponse{}, errors.New("invalid username or password")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		return dto.LoginResponse{}, errors.New("invalid username or password")
+	}
+
+	token, err := utils.GenerateToken(user.ID.String(), user.Role)
+	if err != nil {
+		return dto.LoginResponse{}, errors.New("failed to generate token")
+	}
+
+	return dto.LoginResponse{Token: token, Role: user.Role}, nil
 }
 
 func (s *appService) CreateShippingAgent(ctx context.Context, req dto.ShippingAgentRequest) (dto.ShippingAgentResponse, error) {
