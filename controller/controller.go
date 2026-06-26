@@ -150,10 +150,3 @@ func (ctrl *AppController) GetSummary(c *gin.Context) {
 	res, err := ctrl.svc.GetSummary(c.Request.Context())
 	handleResponse(c, res, err, http.StatusOK)
 }
-
-func (ctrl *AppController) SeedData(c *gin.Context) {
-	c.JSON(http.StatusOK, dto.APIResponse{
-		Success: true,
-		Message: "Seed triggered successfully",
-	})
-}

@@ -12,9 +12,10 @@ import (
 	"manifest-api/config"
 	"manifest-api/controller"
 	"manifest-api/middleware"
-	"manifest-api/repository"
-	"manifest-api/service"
 	"manifest-api/models"
+	"manifest-api/repository"
+	"manifest-api/routes"
+	"manifest-api/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -44,33 +45,7 @@ func main() {
 	r.Use(middleware.Recovery())
 	r.Use(middleware.CORS())
 
-	api := r.Group("/api")
-	{
-		api.POST("/login", appController.Login)
-
-		protected := api.Group("/")
-		protected.Use(middleware.JWTAuth())
-		{
-			protected.POST("/shipping-agents", appController.CreateShippingAgent)
-			protected.GET("/shipping-agents", appController.GetShippingAgents)
-			protected.GET("/shipping-agents/:id", appController.GetShippingAgent)
-
-			protected.POST("/vessels", appController.CreateVessel)
-			protected.GET("/vessels", appController.GetVessels)
-			protected.GET("/vessels/:id", appController.GetVessel)
-
-			protected.POST("/manifests", appController.CreateManifest)
-			protected.GET("/manifests", appController.GetManifests)
-			protected.GET("/manifests/:id", appController.GetManifest)
-			protected.POST("/manifests/:id/details", appController.AddManifestDetail)
-
-			protected.POST("/bc11", appController.CreateBC11)
-			protected.POST("/npe", appController.CreateNPE)
-
-			protected.GET("/summary", appController.GetSummary)
-			protected.POST("/seed", appController.SeedData)
-		}
-	}
+	routes.RegisterRoutes(r, appController)
 
 	port := os.Getenv("PORT")
 	if port == "" {
